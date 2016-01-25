@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Hello WebSocket</title>
+		<script src="sockjs-0.3.4.js"></script>
+		<script src="stomp.js"></script>
+		<script src="http://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+
+		<script type="text/javascript">
+
+			var stompClient = null;
+			var username = null;
+
+			function connect() {
+				var socket = new SockJS('/users');
+				stompClient = Stomp.over(socket);
+				stompClient.connect({}, function (frame) {
+					username = $('#username').val();
+					console.log('Connected: ' + frame);
+					$('#content').show();
+					stompClient.subscribe('/topic/broadcastQueue', function (data) {
+						var elements = JSON.parse(data.body);
+						$('#broadcastQueue')[0].innerHTML = "";
+						var th = document.createElement('th');
+						th.innerHTML = "BroadcastQueue";
+						$('#broadcastQueue')[0].appendChild(th);
+						elements.forEach(function (element) {
+							var row = document.createElement('tr');
+							var cell = document.createElement('td');
+							cell.innerHTML = element.name;
+							row.appendChild(cell);
+							$('#broadcastQueue')[0].appendChild(row);
+						});
+					});
+					stompClient.subscribe('/topic/listeners', function (data) {
+						var elements = JSON.parse(data.body);
+						$('#listeners')[0].innerHTML = "";
+						var th = document.createElement('th');
+						th.innerHTML = "Listeners";
+						$('#listeners')[0].appendChild(th);
+						elements.forEach(function (element) {
+							var row = document.createElement('tr');
+							var cell = document.createElement('td');
+							cell.innerHTML = element.name;
+							row.appendChild(cell);
+
+							$('#listeners')[0].appendChild(row);
+						});
+					});
+					stompClient.subscribe('/topic/broadcaster', function (data) {
+						var user = JSON.parse(data.body);
+						$('#broadcaster')[0].innerHTML = user.name;
+						$('#broadcastButton').hide();
+						if (user.name === username) {
+							if (!$('#stopBroadcastingBtn')[0]) {
+								var stopBroadcastingBtn = document.createElement('button');
+								stopBroadcastingBtn.innerHTML = 'Stop broadcasting';
+								stopBroadcastingBtn.id = 'stopBroadcastingBtn';
+								$('#content')[0].appendChild(stopBroadcastingBtn);
+								stopBroadcastingBtn.onclick = function () {
+									var response = stompClient.send('/app/users/broadcast/remove/' + username, {}, null);
+								};
+							}
+						} else {
+							var btn = document.getElementById('stopBroadcastingBtn');
+							if (btn) {
+								btn.hide();
+							}
+							$('#broadcastButton').show();
+
+						}
+					});
+					var response = stompClient.send('/app/users/' + username, {}, null);
+					$('#username').hide();
+					$('#button')[0].innerHTML = 'Disconnect';
+					$('#button')[0].onclick = function () {
+						disconnect();
+					};
+				});
+			}
+			$(document).ready(function () {
+				$('#broadcastButton')[0].onclick = function () {
+					var response = stompClient.send('/app/users/broadcast/' + username, {}, null);
+				};
+			});
+
+
+			function disconnect() {
+				if (stompClient != null) {
+					stompClient.disconnect();
+				}
+				console.log("Disconnected");
+			}
+
+			function hide() {
+				$('#content').hide();
+			}
+
+		</script>
+	</head>
+	<body onload="hide()">
+		<noscript>
+		<h2 style="color: #ff0000">
+			Seems your browser doesn't support Javascript! Websocket relies on Javascript being enabled. Please enable
+			Javascript and reload this page!
+		</h2>
+		</noscript>
+
+		<input type="text" placeholder="username" id="username">
+		<button onclick="connect()" id="button">Connect</button>
+		<div id="content">
+			<h2>Now broadcasting: <span id="broadcaster"></span></h2>
+			<table id="listeners">
+				<th>Listeners</th>
+			</table>
+			<table id="broadcastQueue">
+				<th>Broadcast Queue</th>
+			</table>
+			<button id="broadcastButton">Nadawaj</button>
+		</div>
+	</body>
+</html>
