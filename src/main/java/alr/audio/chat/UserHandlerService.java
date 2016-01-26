@@ -1,10 +1,11 @@
 package alr.audio.chat;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.SynchronousQueue;
 
 import org.springframework.stereotype.Service;
 
@@ -57,16 +58,32 @@ public class UserHandlerService {
 
 	}
 
-	public Queue<UserModel> getBrodcasters() {
-		return broadcastQueue;
+	public Collection<UserModel> getBrodcasters() {
+		return Collections.unmodifiableCollection(broadcastQueue);
 	}
 
-	public List<UserModel> getUsers() {
-		return listeningUsers;
+	public List<UserModel> getListeningUsers() {
+		return Collections.unmodifiableList(listeningUsers);
 	}
 
 	public UserModel getBroadcaster() {
 		return broadcaster;
+	}
+
+	void removeBroadcasterPermanently(UserModel user) {
+		if (broadcastQueue.contains(user)) {
+			broadcastQueue.remove(user);
+		} else {
+			if (user.getId().equals(broadcaster.getId())) {
+				synchronized (this) {
+					broadcaster = broadcastQueue.poll();
+					if (broadcaster == null) {
+						broadcaster = listeningUsers.get(0);
+						listeningUsers.remove(broadcaster);
+					}
+				}
+			}
+		}
 	}
 
 }

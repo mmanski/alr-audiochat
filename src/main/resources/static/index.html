@@ -75,6 +75,9 @@
 					$('#button')[0].innerHTML = 'Disconnect';
 					$('#button')[0].onclick = function () {
 						disconnect();
+						hide();
+						$('#button').hide();
+						document.body.innerHTML = '<h2>Disconnected!</h2>';
 					};
 				});
 			}
