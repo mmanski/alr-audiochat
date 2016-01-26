@@ -41,6 +41,7 @@ public class UserHandlerService {
 			broadcaster = user;
 		} else {
 			broadcastQueue.add(user);
+			listeningUsers.remove(user);
 		}
 	}
 
@@ -48,7 +49,7 @@ public class UserHandlerService {
 		if (broadcastQueue.contains(user)) {
 			broadcastQueue.remove(user);
 		} else {
-			if (user.getId().equals(broadcaster.getId())) {
+			if (!listeningUsers.isEmpty() && !broadcastQueue.isEmpty() && user.getId().equals(broadcaster.getId())) {
 				synchronized (this) {
 					broadcaster = broadcastQueue.poll();
 					listeningUsers.add(user);

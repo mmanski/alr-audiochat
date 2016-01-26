@@ -59,12 +59,15 @@
 								$('#content')[0].appendChild(stopBroadcastingBtn);
 								stopBroadcastingBtn.onclick = function () {
 									var response = stompClient.send('/app/users/broadcast/remove/' + username, {}, null);
+									stopBroadcastingBtn.hide();
+									$('#broadcastButton').show();
 								};
+							} else {
+								$('#stopBroadcastingBtn').show();
 							}
 						} else {
-							var btn = document.getElementById('stopBroadcastingBtn');
-							if (btn) {
-								btn.hide();
+							if ($('#stopBroadcastingBtn')) {
+								$('#stopBroadcastingBtn').hide();
 							}
 							$('#broadcastButton').show();
 
